@@ -1,4 +1,4 @@
-/* 
+/*
  *  at.c : Put file into atrun queue
  *  Copyright (C) 1993, 1994, 1995, 1996, 1997 Thomas Koenig
  *  Copyright (C) 2002, 2005 Ryan Murray
@@ -11,7 +11,7 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful, 
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -83,17 +83,17 @@
 #define ATJOB_MX 255
 #endif
 
-#define ALARMC 10		/* Number of seconds to wait for timeout */
+#define ALARMC 10       /* Number of seconds to wait for timeout */
 
 #define SIZE 255
 
-#define TIMEFORMAT_POSIX	"%a %b %e %T %Y"
-#define TIMEFORMAT_ISO		"%Y-%m-%d %H:%M"
-#define TIMESIZE	50
+#define TIMEFORMAT_POSIX    "%a %b %e %T %Y"
+#define TIMEFORMAT_ISO      "%Y-%m-%d %H:%M"
+#define TIMESIZE    50
 
 enum {
     ATQ, BATCH, ATRM, AT, CAT
-};				/* what program we want to run */
+};              /* what program we want to run */
 
 /* Global variables */
 
@@ -119,9 +119,9 @@ int fcreated;
 char *namep;
 char atfile[] = ATJOB_DIR "/12345678901234";
 
-char *atinput = (char *) 0;	/* where to get input from */
-char atqueue = 0;		/* which queue to examine for jobs (atq) */
-char atverify = 0;		/* verify time instead of queuing job */
+char *atinput = (char *) 0; /* where to get input from */
+char atqueue = 0;       /* which queue to examine for jobs (atq) */
+char atverify = 0;      /* verify time instead of queuing job */
 
 /* Function declarations */
 
@@ -134,33 +134,33 @@ static time_t parsetimespec(const char *spec);
 
 /* Signal catching functions */
 
-static RETSIGTYPE 
+static RETSIGTYPE
 sigc(int signo)
 {
-/* If the user presses ^C, remove the spool file and exit 
- */
+    /* If the user presses ^C, remove the spool file and exit
+     */
     if (fcreated) {
-	/*
-        PRIV_START
+        /*
+            PRIV_START
 
-        We need the unprivileged uid here since the file is owned by the real
-        (not effective) uid.
-        */
+            We need the unprivileged uid here since the file is owned by the real
+            (not effective) uid.
+            */
         setregid(real_gid, effective_gid);
-	    unlink(atfile);
+        unlink(atfile);
         setregid(effective_gid, real_gid);
         /*
-	PRIV_END
-        */
+        PRIV_END
+               */
     }
     exit(EXIT_FAILURE);
 }
 
-static void 
+static void
 alarmc(int signo)
 {
-/* Time out after some seconds
- */
+    /* Time out after some seconds
+     */
     panic("File locking timed out");
 }
 
@@ -169,28 +169,28 @@ alarmc(int signo)
 static char *
 cwdname(void)
 {
-/* Read in the current directory; the name will be overwritten on
- * subsequent calls.
- */
+    /* Read in the current directory; the name will be overwritten on
+     * subsequent calls.
+     */
     static char *ptr = NULL;
     static size_t size = SIZE;
 
     if (ptr == NULL)
-	ptr = (char *) mymalloc(size);
+        ptr = (char *) mymalloc(size);
 
     while (1) {
-	if (ptr == NULL)
-	    panic("Out of memory");
+        if (ptr == NULL)
+            panic("Out of memory");
 
-	if (getcwd(ptr, size - 1) != NULL)
-	    return ptr;
+        if (getcwd(ptr, size - 1) != NULL)
+            return ptr;
 
-	if (errno != ERANGE)
-	    perr("Cannot get current working directory");
+        if (errno != ERANGE)
+            perr("Cannot get current working directory");
 
-	free(ptr);
-	size += SIZE;
-	ptr = (char *) mymalloc(size);
+        free(ptr);
+        size += SIZE;
+        ptr = (char *) mymalloc(size);
     }
 }
 
@@ -203,29 +203,29 @@ nextjob()
     jobno = 0;
     fid = fopen(LFILE, "r+");
     if (fid != NULL) {
-	fscanf(fid, "%5lx", &jobno);
-	rewind(fid);
+        fscanf(fid, "%5lx", &jobno);
+        rewind(fid);
     } else {
-	fid = fopen(LFILE, "w");
-	if (fid == NULL)
-	    return EOF;
+        fid = fopen(LFILE, "w");
+        if (fid == NULL)
+            return EOF;
     }
-    jobno = (1 + jobno) % 0xfffff;	/* 2^20 jobs enough? */
+    jobno = (1 + jobno) % 0xfffff;  /* 2^20 jobs enough? */
     fprintf(fid, "%05lx\n", jobno);
 
     if (ferror(fid))
-	jobno = EOF;
+        jobno = EOF;
 
     if (fclose(fid) != 0)
-	jobno = EOF;
+        jobno = EOF;
     return jobno;
 }
 
 static void
 writefile(time_t runtimer, char queue)
 {
-/* This does most of the work if at or batch are invoked for writing a job.
- */
+    /* This does most of the work if at or batch are invoked for writing a job.
+     */
     long jobno;
     char *ap, *ppos, *mailname;
     struct passwd *pass_entry;
@@ -249,11 +249,11 @@ writefile(time_t runtimer, char queue)
     long int i;
 
     gettimeofday(&tv, &tz);
-    srandom(getpid()+tv.tv_usec);
+    srandom(getpid() + tv.tv_usec);
 
-/* Install the signal handler for SIGINT; terminate after removing the
- * spool file if necessary
- */
+    /* Install the signal handler for SIGINT; terminate after removing the
+     * spool file if necessary
+     */
     memset(&act, 0, sizeof act);
     act.sa_handler = sigc;
     sigemptyset(&(act.sa_mask));
@@ -267,7 +267,7 @@ writefile(time_t runtimer, char queue)
     errno = 0;
     rc = sysconf(_SC_LOGIN_NAME_MAX);
     if (rc > 0)
-	mailsize = rc;
+        mailsize = rc;
 #else
 #  ifdef LOGIN_NAME_MAX
     mailsize = LOGIN_NAME_MAX;
@@ -281,63 +281,63 @@ writefile(time_t runtimer, char queue)
 
     PRIV_START
 
-	if ((lockdes = open(LFILE, O_WRONLY)) < 0)
-	    perr("Cannot open lockfile " LFILE);
+    if ((lockdes = open(LFILE, O_WRONLY)) < 0)
+        perr("Cannot open lockfile " LFILE);
 
-	lock.l_type = F_WRLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 0;
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
 
-	act.sa_handler = alarmc;
-	sigemptyset(&(act.sa_mask));
-	act.sa_flags = 0;
+    act.sa_handler = alarmc;
+    sigemptyset(&(act.sa_mask));
+    act.sa_flags = 0;
 
-	/* Set an alarm so a timeout occurs after ALARMC seconds, in case
-	 * something is seriously broken.
-	 */
-	sigaction(SIGALRM, &act, NULL);
-	alarm(ALARMC);
-	fcntl(lockdes, F_SETLKW, &lock);
-	alarm(0);
+    /* Set an alarm so a timeout occurs after ALARMC seconds, in case
+     * something is seriously broken.
+     */
+    sigaction(SIGALRM, &act, NULL);
+    alarm(ALARMC);
+    fcntl(lockdes, F_SETLKW, &lock);
+    alarm(0);
 
-	if ((jobno = nextjob()) == EOF)
-	    perr("Cannot generate job number");
+    if ((jobno = nextjob()) == EOF)
+        perr("Cannot generate job number");
 
-	(void)snprintf(ppos, sizeof(atfile) - (ppos - atfile),
-		       "%c%5lx%8lx", queue, jobno, (unsigned long) (runtimer / 60));
+    (void)snprintf(ppos, sizeof(atfile) - (ppos - atfile),
+                   "%c%5lx%8lx", queue, jobno, (unsigned long) (runtimer / 60));
 
-	for (ap = ppos; *ap != '\0'; ap++)
-	    if (*ap == ' ')
-		*ap = '0';
+    for (ap = ppos; *ap != '\0'; ap++)
+        if (*ap == ' ')
+            *ap = '0';
 
-	if (stat(atfile, &statbuf) != 0) {
-	    if (errno != ENOENT)
-		perr("Cannot access " ATJOB_DIR);
-	} else {
-	    perr("atjob file already exists; bailing");
-	}
+    if (stat(atfile, &statbuf) != 0) {
+        if (errno != ENOENT)
+            perr("Cannot access " ATJOB_DIR);
+    } else {
+        perr("atjob file already exists; bailing");
+    }
 
-	/* Create the file. The x bit is only going to be set after it has
-	 * been completely written out, to make sure it is not executed in the
-	 * meantime.  To make sure they do not get deleted, turn off their r
-	 * bit.  Yes, this is a kluge.
-	 */
-	cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
-        seteuid(effective_uid);
-	if ((fd = open(atfile, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, S_IRUSR)) == -1)
-	    perr("Cannot create atjob file %.500s", atfile);
-        //seteuid(effective_uid);
+    /* Create the file. The x bit is only going to be set after it has
+     * been completely written out, to make sure it is not executed in the
+     * meantime.  To make sure they do not get deleted, turn off their r
+     * bit.  Yes, this is a kluge.
+     */
+    cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
+    seteuid(effective_uid);
+    if ((fd = open(atfile, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, S_IRUSR)) == -1)
+        perr("Cannot create atjob file %.500s", atfile);
+    //seteuid(effective_uid);
 
-	if ((fd2 = dup(fd)) < 0)
-	    perr("Error in dup() of job file");
+    if ((fd2 = dup(fd)) < 0)
+        perr("Error in dup() of job file");
 
-	if (fchown(fd2, real_uid, real_gid) != 0)
-	    perr("Cannot give real_uid and real_gid the file");
+    if (fchown(fd2, real_uid, real_gid) != 0)
+        perr("Cannot give real_uid and real_gid the file");
 
     PRIV_END
 
-    /* We've successfully created the file; let's set the flag so it 
+    /* We've successfully created the file; let's set the flag so it
      * gets removed in case of an interrupt or error.
      */
     fcreated = 1;
@@ -352,32 +352,32 @@ writefile(time_t runtimer, char queue)
     close(lockdes);
 
     if ((fp = fdopen(fd, "w")) == NULL)
-	panic("Cannot reopen atjob file");
+        panic("Cannot reopen atjob file");
 
     /* Get the userid to mail to, first by trying getlogin(), which reads
      * /var/run/utmp, then from LOGNAME, finally from getpwuid().
      */
     mailname = getlogin();
     if (mailname == NULL)
-	mailname = getenv("LOGNAME");
+        mailname = getenv("LOGNAME");
     if (mailname == NULL || mailname[0] == '\0' || getpwnam(mailname) == NULL) {
-	pass_entry = getpwuid(real_uid);
-	if (pass_entry != NULL)
-	    mailname = pass_entry->pw_name;
+        pass_entry = getpwuid(real_uid);
+        if (pass_entry != NULL)
+            mailname = pass_entry->pw_name;
     }
 
     if ((mailname == NULL) || (mailname[0] == '\0')
-	|| (strlen(mailname) > mailsize) ) {
-	panic("Cannot find username to mail output to");
+            || (strlen(mailname) > mailsize) ) {
+        panic("Cannot find username to mail output to");
     }
     if (atinput != (char *) NULL) {
-	fpin = freopen(atinput, "r", stdin);
-	if (fpin == NULL)
-	    perr("Cannot open input file %.500s", atinput);
+        fpin = freopen(atinput, "r", stdin);
+        if (fpin == NULL)
+            perr("Cannot open input file %.500s", atinput);
     }
 
     fprintf(fp, "#!/bin/sh\n# atrun uid=%d gid=%d\n# mail %s %d\n",
-	    real_uid, real_gid, mailname, send_mail);
+            real_uid, real_gid, mailname, send_mail);
 
     /* Write out the umask at the time of invocation
      */
@@ -389,8 +389,8 @@ writefile(time_t runtimer, char queue)
      * as TERM or DISPLAY) because we don't want these.
      */
     for (atenv = environ; *atenv != NULL; atenv++) {
-	int export = 1;
-	char *eqp;
+        int export = 1;
+        char *eqp;
 
         /* Only accept alphanumerics and underscore in variable names.
          * Also require the name to not start with a digit.
@@ -408,112 +408,112 @@ writefile(time_t runtimer, char queue)
             }
         }
 
-	eqp = strchr(*atenv, '=');
-	if (ap == NULL)
-	    eqp = *atenv;
-	else {
-	    unsigned int i;
-	    for (i = 0; i < sizeof(no_export) / sizeof(no_export[0]); i++) {
-		export = export
-	    	    && (  (((size_t) (eqp - *atenv)) != strlen(no_export[i]))
-			||(strncmp(*atenv, no_export[i],(size_t) (eqp - *atenv)) != 0)
-                );
-	    }
-	    eqp++;
-	}
+        eqp = strchr(*atenv, '=');
+        if (ap == NULL)
+            eqp = *atenv;
+        else {
+            unsigned int i;
+            for (i = 0; i < sizeof(no_export) / sizeof(no_export[0]); i++) {
+                export = export
+                         && (  (((size_t) (eqp - *atenv)) != strlen(no_export[i]))
+                               || (strncmp(*atenv, no_export[i], (size_t) (eqp - *atenv)) != 0)
+                            );
+            }
+            eqp++;
+        }
 
-	if (export) {
-	    fwrite(*atenv, sizeof(char), eqp - *atenv, fp);
-	    for (ap = eqp; *ap != '\0'; ap++) {
-		if (*ap == '\n')
-		    fprintf(fp, "\"\n\"");
-		else {
-		    if (!isalnum(*ap)) {
-			switch (*ap) {
-			case '%':
-			case '/':
-			case '{':
-			case '[':
-			case ']':
-			case '=':
-			case '}':
-			case '@':
-			case '+':
-			case '#':
-			case ',':
-			case '.':
-			case ':':
-			case '-':
-			case '_':
-			    break;
-			default:
-			    fputc('\\', fp);
-			    break;
-			}
-		    }
-		    fputc(*ap, fp);
-		}
-	    }
-	    fputs("; export ", fp);
-	    fwrite(*atenv, sizeof(char), eqp - *atenv - 1, fp);
-	    fputc('\n', fp);
+        if (export) {
+            fwrite(*atenv, sizeof(char), eqp - *atenv, fp);
+            for (ap = eqp; *ap != '\0'; ap++) {
+                if (*ap == '\n')
+                    fprintf(fp, "\"\n\"");
+                else {
+                    if (!isalnum(*ap)) {
+                        switch (*ap) {
+                        case '%':
+                        case '/':
+                        case '{':
+                        case '[':
+                        case ']':
+                        case '=':
+                        case '}':
+                        case '@':
+                        case '+':
+                        case '#':
+                        case ',':
+                        case '.':
+                        case ':':
+                        case '-':
+                        case '_':
+                            break;
+                        default:
+                            fputc('\\', fp);
+                            break;
+                        }
+                    }
+                    fputc(*ap, fp);
+                }
+            }
+            fputs("; export ", fp);
+            fwrite(*atenv, sizeof(char), eqp - *atenv - 1, fp);
+            fputc('\n', fp);
 
-	}
+        }
     }
     /* Cd to the directory at the time and write out all the
      * commands the user supplies from stdin.
      */
     fprintf(fp, "cd ");
     for (ap = cwdname(); *ap != '\0'; ap++) {
-	if (*ap == '\n')
-	    fprintf(fp, "\"\n\"");
-	else {
-	    if (*ap != '/' && !isalnum(*ap))
-		fputc('\\', fp);
+        if (*ap == '\n')
+            fprintf(fp, "\"\n\"");
+        else {
+            if (*ap != '/' && !isalnum(*ap))
+                fputc('\\', fp);
 
-	    fputc(*ap, fp);
-	}
+            fputc(*ap, fp);
+        }
     }
     /* Test cd's exit status: die if the original directory has been
      * removed, become unreadable or whatever
      */
     fprintf(fp, " || {\n\t echo 'Execution directory "
-	    "inaccessible' >&2\n\t exit 1\n}\n");
+            "inaccessible' >&2\n\t exit 1\n}\n");
 
     i = random();
     fprintf(fp, "${SHELL:-/bin/sh} << \'marcinDELIMITER%08lx\'\n", i);
 
     istty = isatty(fileno(stdin));
     if (istty) {
-	fprintf(stderr, "at> ");
-	fflush(stderr);
+        fprintf(stderr, "at> ");
+        fflush(stderr);
     }
     while ((ch = getchar()) != EOF) {
-	fputc(ch, fp);
-	if (ch == '\n' && istty) {
-	    fprintf(stderr, "at> ");
-	    fflush(stderr);
-	}
+        fputc(ch, fp);
+        if (ch == '\n' && istty) {
+            fprintf(stderr, "at> ");
+            fflush(stderr);
+        }
     }
     if (istty) {
-	fprintf(stderr, "<EOT>\n");
+        fprintf(stderr, "<EOT>\n");
     }
     fprintf(fp, "\n");
     fprintf(fp, "marcinDELIMITER%08lx\n", i);
     if (ferror(fp))
-	panic("Output error");
+        panic("Output error");
 
     if (ferror(stdin))
-	panic("Input error");
+        panic("Input error");
 
     if (fclose(fp) != 0)
-	panic("Output error");
+        panic("Output error");
 
     /* Set the x bit so that we're ready to start executing
      */
 
     if (fchmod(fd2, S_IRUSR | S_IWUSR | S_IXUSR) < 0)
-	perr("Cannot change the mode of the file");
+        perr("Cannot change the mode of the file");
 
     close(fd2);
 
@@ -524,57 +524,57 @@ writefile(time_t runtimer, char queue)
      */
 
     if (getenv("POSIXLY_CORRECT") != NULL) {
-	strftime(timestr, TIMESIZE, TIMEFORMAT_POSIX, runtime);
+        strftime(timestr, TIMESIZE, TIMEFORMAT_POSIX, runtime);
     } else {
-	strftime(timestr, TIMESIZE, TIMEFORMAT_ISO, runtime);
+        strftime(timestr, TIMESIZE, TIMEFORMAT_ISO, runtime);
     }
     fprintf(stderr, "job %ld at %s\n", jobno, timestr);
 
     /* Signal atd, if present. Usual precautions taken... */
     fd = open(PIDFILE, O_RDONLY);
     if (fd == -1) {
-	fprintf(stderr, "Can't open " PIDFILE " to signal atd. No atd running?\n");
-	return;
+        fprintf(stderr, "Can't open " PIDFILE " to signal atd. No atd running?\n");
+        return;
     }
 
     if (fstat(fd, &statbuf) == -1)
-	return;
+        return;
     if ((statbuf.st_uid != 0) || !S_ISREG(statbuf.st_mode) ||
-	(statbuf.st_mode & (S_IWGRP | S_IWOTH)))
-	return;
+            (statbuf.st_mode & (S_IWGRP | S_IWOTH)))
+        return;
 
     fp = fdopen(fd, "r");
     if (fp == NULL)
-	return;
+        return;
     if (fscanf(fp, "%d", &pid) != 1)
-	return;
+        return;
 
     kill_errno = 0;
 
     PRIV_START
-	if (kill(pid, SIGHUP) == -1)
-	    kill_errno = errno;
+    if (kill(pid, SIGHUP) == -1)
+        kill_errno = errno;
     PRIV_END
 
-	switch (kill_errno) {
+    switch (kill_errno) {
     case 0:
-	break;
+        break;
 
     case EINVAL:
-	panic("kill returned EINVAL");
-	break;
+        panic("kill returned EINVAL");
+        break;
 
     case EPERM:
-	fprintf(stderr,"Can't signal atd (permission denied)\n");
-	break;
+        fprintf(stderr, "Can't signal atd (permission denied)\n");
+        break;
 
     case ESRCH:
-	fprintf(stderr, "Warning: at daemon not running\n");
-	break;
+        fprintf(stderr, "Warning: at daemon not running\n");
+        break;
 
     default:
-	panic("kill returned impossible error number");
-	break;
+        panic("kill returned impossible error number");
+        break;
     }
     return;
 }
@@ -582,7 +582,7 @@ writefile(time_t runtimer, char queue)
 static void
 list_jobs(void)
 {
-    /* List all a user's jobs in the queue, by looping through ATJOB_DIR, 
+    /* List all a user's jobs in the queue, by looping through ATJOB_DIR,
      * or everybody's if we are root
      */
     DIR *spool;
@@ -599,41 +599,41 @@ list_jobs(void)
     PRIV_START
 
     if (chdir(ATJOB_DIR) != 0)
-	perr("Cannot change to " ATJOB_DIR);
+        perr("Cannot change to " ATJOB_DIR);
 
     if ((spool = opendir(".")) == NULL)
-	perr("Cannot open " ATJOB_DIR);
+        perr("Cannot open " ATJOB_DIR);
 
-    /*  Loop over every file in the directory 
+    /*  Loop over every file in the directory
      */
     while ((dirent = readdir(spool)) != NULL) {
-	if (stat(dirent->d_name, &buf) != 0)
-	    perr("Cannot stat in " ATJOB_DIR);
+        if (stat(dirent->d_name, &buf) != 0)
+            perr("Cannot stat in " ATJOB_DIR);
 
-	/* See it's a regular file and is the user's */
-	if (!S_ISREG(buf.st_mode)
-	    || ((buf.st_uid != real_uid) && !(real_uid == 0))
-	    || atverify)
-	    continue;
+        /* See it's a regular file and is the user's */
+        if (!S_ISREG(buf.st_mode)
+                || ((buf.st_uid != real_uid) && !(real_uid == 0))
+                || atverify)
+            continue;
 
-	if (sscanf(dirent->d_name, "%c%5lx%8lx", &queue, &jobno, &ctm) != 3)
-	    continue;
+        if (sscanf(dirent->d_name, "%c%5lx%8lx", &queue, &jobno, &ctm) != 3)
+            continue;
 
-	if (atqueue && (queue != atqueue))
-	    continue;
+        if (atqueue && (queue != atqueue))
+            continue;
 
-	runtimer = 60 * (time_t) ctm;
-	runtime = localtime(&runtimer);
+        runtimer = 60 * (time_t) ctm;
+        runtime = localtime(&runtimer);
 
-	if (getenv("POSIXLY_CORRECT") != NULL) {
-	    strftime(timestr, TIMESIZE, TIMEFORMAT_POSIX, runtime);
-	} else {
-	    strftime(timestr, TIMESIZE, TIMEFORMAT_ISO, runtime);
-	}
-	if ((pwd = getpwuid(buf.st_uid)))
-	  printf("%ld\t%s %c %s\n", jobno, timestr, queue, pwd->pw_name);
-	else
-	  printf("%ld\t%s %c\n", jobno, timestr, queue);
+        if (getenv("POSIXLY_CORRECT") != NULL) {
+            strftime(timestr, TIMESIZE, TIMEFORMAT_POSIX, runtime);
+        } else {
+            strftime(timestr, TIMESIZE, TIMEFORMAT_ISO, runtime);
+        }
+        if ((pwd = getpwuid(buf.st_uid)))
+            printf("%ld\t%s %c %s\n", jobno, timestr, queue, pwd->pw_name);
+        else
+            printf("%ld\t%s %c\n", jobno, timestr, queue);
     }
     PRIV_END
 }
@@ -654,94 +654,94 @@ process_jobs(int argc, char **argv, int what)
     int done;
 
     for (i = optind; i < argc; i++) {
-	done = 0;
-    PRIV_START
+        done = 0;
+        PRIV_START
 
-    if (chdir(ATJOB_DIR) != 0)
-	perr("Cannot change to " ATJOB_DIR);
+        if (chdir(ATJOB_DIR) != 0)
+            perr("Cannot change to " ATJOB_DIR);
 
-    if ((spool = opendir(".")) == NULL)
-	perr("Cannot open " ATJOB_DIR);
+        if ((spool = opendir(".")) == NULL)
+            perr("Cannot open " ATJOB_DIR);
 
-    PRIV_END
+        PRIV_END
 
-    /*  Loop over every file in the directory 
-     */
-	while ((dirent = readdir(spool)) != NULL) {
+        /*  Loop over every file in the directory
+         */
+        while ((dirent = readdir(spool)) != NULL) {
 
-	PRIV_START
-	if (stat(dirent->d_name, &buf) != 0)
-	    perr("Cannot stat in " ATJOB_DIR);
-	PRIV_END
+            PRIV_START
+            if (stat(dirent->d_name, &buf) != 0)
+                perr("Cannot stat in " ATJOB_DIR);
+            PRIV_END
 
-	    if (sscanf(dirent->d_name, "%c%5lx%8lx", &queue, &jobno, &ctm) != 3)
-	    continue;
+            if (sscanf(dirent->d_name, "%c%5lx%8lx", &queue, &jobno, &ctm) != 3)
+                continue;
 
-	    if (atoi(argv[i]) == jobno) {
-		if ((buf.st_uid != real_uid) && !(real_uid == 0)) {
-		    fprintf(stderr, "%s: Not owner\n", argv[i]);
-		    exit(EXIT_FAILURE);
-		}
-		switch (what) {
-		case ATRM:
+            if (atoi(argv[i]) == jobno) {
+                if ((buf.st_uid != real_uid) && !(real_uid == 0)) {
+                    fprintf(stderr, "%s: Not owner\n", argv[i]);
+                    exit(EXIT_FAILURE);
+                }
+                switch (what) {
+                case ATRM:
 
                     /*
                     We need the unprivileged uid here since the file is owned by the real
                     (not effective) uid.
                     */
-		    PRIV_START
+                    PRIV_START
 
-		    if (queue == '=') {
-			fprintf(stderr, "Warning: deleting running job\n");
-		    }
-		    if (unlink(dirent->d_name) != 0) {
-			perr("Cannot unlink %.500s", dirent->d_name);
-			rc = EXIT_FAILURE;
-		    }
-		    PRIV_END
+                    if (queue == '=') {
+                        fprintf(stderr, "Warning: deleting running job\n");
+                    }
+                    if (unlink(dirent->d_name) != 0) {
+                        perr("Cannot unlink %.500s", dirent->d_name);
+                        rc = EXIT_FAILURE;
+                    }
+                    PRIV_END
 
-		    done = 1;
+                    done = 1;
 
-		    break;
+                    break;
 
-		case CAT:
-		    {
-			FILE *fp;
-			int ch;
+                case CAT:
+                {
+                    FILE *fp;
+                    int ch;
 
-			PRIV_START
-			fp = fopen(dirent->d_name, "r");
+                    PRIV_START
+                    fp = fopen(dirent->d_name, "r");
 
-			if (fp) {
-			    while ((ch = getc(fp)) != EOF) {
-				putchar(ch);
-			    }
-			    done = 1;
-			}
-			else {
-			    perr("Cannot open %.500s", dirent->d_name);
-			    rc = EXIT_FAILURE;
-			}
-			PRIV_END
-		    }
-		    break;
+                    if (fp) {
+                        while ((ch = getc(fp)) != EOF) {
+                            putchar(ch);
+                        }
+                        done = 1;
+                    }
+                    else {
+                        perr("Cannot open %.500s", dirent->d_name);
+                        rc = EXIT_FAILURE;
+                    }
+                    PRIV_END
+                }
+                break;
 
-		default:
-		    fprintf(stderr,
-			    "Internal error, process_jobs = %d\n", what);
-		    exit(EXIT_FAILURE);
-		    break;
-		}
-	    }
-	}
-	closedir(spool);
-	if (done != 1) {
-	    fprintf(stderr, "Cannot find jobid %s\n", argv[i] );
-	    rc = EXIT_FAILURE;
-	}
+                default:
+                    fprintf(stderr,
+                            "Internal error, process_jobs = %d\n", what);
+                    exit(EXIT_FAILURE);
+                    break;
+                }
+            }
+        }
+        closedir(spool);
+        if (done != 1) {
+            fprintf(stderr, "Cannot find jobid %s\n", argv[i] );
+            rc = EXIT_FAILURE;
+        }
     }
     return rc;
-}				/* delete_jobs */
+}               /* delete_jobs */
 
 static time_t parsetimespec(const char *spec)
 {
@@ -754,23 +754,23 @@ static time_t parsetimespec(const char *spec)
 
     dot = strrchr(spec, '.');
     if (dot) {
-	len -= 3;
+        len -= 3;
     }
 
     if (len == 12) {
-	pos += 4;
-	len -= 4;
-	/* first 4 digits to year */
+        pos += 4;
+        len -= 4;
+        /* first 4 digits to year */
     } else if (len == 10) {
-	pos += 2;
-	len -= 2;
-	/* first 2 digits become last 2 digits of year.  If in past, +100 to year */
+        pos += 2;
+        len -= 2;
+        /* first 2 digits become last 2 digits of year.  If in past, +100 to year */
     }
     if (len == 8)
-	/* year is current year unless date would be in past, if so, next year */
-	;
+        /* year is current year unless date would be in past, if so, next year */
+        ;
     else
-	return 0; /* corrupt */
+        return 0; /* corrupt */
 }
 
 /* Global functions */
@@ -780,8 +780,8 @@ mymalloc(size_t n)
 {
     void *p;
     if ((p = malloc(n)) == (void *) 0) {
-	fprintf(stderr, "Virtual memory exhausted\n");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "Virtual memory exhausted\n");
+        exit(EXIT_FAILURE);
     }
     return p;
 }
@@ -794,92 +794,92 @@ mymalloc(size_t n)
 time_t
 t_option(char *s)
 {
-        time_t t=time(0L);
-        struct tm tm, tm_now=*localtime(&t);
-        int l;
-    
-        if((s == 0L) || (*s == '\0'))
-        {
-	       return 0L;
-	    };
-	    memset(&tm,'\0',sizeof(tm));
-	    l = strnlen(s,15);
-	    switch(l)
-	    {
-	        case 15:
-	           /* CCYYMMDDhhmm.ss */
-	           sscanf(s, "%4d%2d%2d%2d%2d.%2d",
-	                  &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec
-	                 );
-	           if(tm.tm_year)
-	               tm.tm_year -= 1900 ;
-	    
-	           break;
-	    
-	        case 13:
-	           /* YYMMDDhhmm.ss */
-	           sscanf(s, "%2d%2d%2d%2d%2d.%2d",
-	                  &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec
-	                 );
-	           if(tm.tm_year)
-	               tm.tm_year += 100 ; /* Y2.1K+ bug! */
-	    
-	           break;
-	    	    
-	        case 11:
-	           /* MMDDhhmm.ss */
-	           sscanf(s, "%2d%2d%2d%2d.%2d",
-	                  &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec
-	                 );
-	    
-	           tm.tm_year = tm_now.tm_year;
-	    
-	           if(tm.tm_mon)
-	               tm.tm_mon -= 1;
-	           break;
-	    
-	        case 12:
-	           /* CCYYMMDDhhmm */
-	           sscanf(s, "%4d%2d%2d%2d%2d",
-	                  &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min
-	                 );
-	           if(tm.tm_year)
-	               tm.tm_year -= 1900 ;
-	           break;
-	    
-	        case 10:
-	           /* YYMMDDhhmm */
-	           sscanf(s, "%2d%2d%2d%2d%2d",
-	                  &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min
-	                 );
-	           if(tm.tm_year)
-	               tm.tm_year += 100 ; /* Y2.1K+ bug! */
-	           break;
-	    
-	        case  8:
-	           /* MMDDhhmm */
-	           sscanf(s, "%2d%2d%2d%2d",
-	                  &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min
-	                 );
-	           if( tm.tm_mday )
-	               tm.tm_year = tm_now.tm_year;
-	           break;
-	        default:
-	           break;
-	        }
-	    
-	        if( tm.tm_mon )
-	           tm.tm_mon -= 1;
-	    
-	        if( tm.tm_mday )
-	        {
-		       tm.tm_isdst = -1;
-		       t = mktime(&tm);
-		       return t;
-		} else
-		       return 0L;
+    time_t t = time(0L);
+    struct tm tm, tm_now = *localtime(&t);
+    int l;
+
+    if ((s == 0L) || (*s == '\0'))
+    {
+        return 0L;
+    };
+    memset(&tm, '\0', sizeof(tm));
+    l = strnlen(s, 15);
+    switch (l)
+    {
+    case 15:
+        /* CCYYMMDDhhmm.ss */
+        sscanf(s, "%4d%2d%2d%2d%2d.%2d",
+               &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec
+              );
+        if (tm.tm_year)
+            tm.tm_year -= 1900 ;
+
+        break;
+
+    case 13:
+        /* YYMMDDhhmm.ss */
+        sscanf(s, "%2d%2d%2d%2d%2d.%2d",
+               &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec
+              );
+        if (tm.tm_year)
+            tm.tm_year += 100 ; /* Y2.1K+ bug! */
+
+        break;
+
+    case 11:
+        /* MMDDhhmm.ss */
+        sscanf(s, "%2d%2d%2d%2d.%2d",
+               &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec
+              );
+
+        tm.tm_year = tm_now.tm_year;
+
+        if (tm.tm_mon)
+            tm.tm_mon -= 1;
+        break;
+
+    case 12:
+        /* CCYYMMDDhhmm */
+        sscanf(s, "%4d%2d%2d%2d%2d",
+               &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min
+              );
+        if (tm.tm_year)
+            tm.tm_year -= 1900 ;
+        break;
+
+    case 10:
+        /* YYMMDDhhmm */
+        sscanf(s, "%2d%2d%2d%2d%2d",
+               &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min
+              );
+        if (tm.tm_year)
+            tm.tm_year += 100 ; /* Y2.1K+ bug! */
+        break;
+
+    case  8:
+        /* MMDDhhmm */
+        sscanf(s, "%2d%2d%2d%2d",
+               &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min
+              );
+        if ( tm.tm_mday )
+            tm.tm_year = tm_now.tm_year;
+        break;
+    default:
+        break;
+    }
+
+    if ( tm.tm_mon )
+        tm.tm_mon -= 1;
+
+    if ( tm.tm_mday )
+    {
+        tm.tm_isdst = -1;
+        t = mktime(&tm);
+        return t;
+    } else
+        return 0L;
 }
-		
+
 
 
 int
@@ -890,224 +890,224 @@ main(int argc, char **argv)
     char queue_set = 0;
     char *pgm;
 
-    int program = AT;		/* our default program */
-    char *options = "q:f:MmvldhVct:";	/* default options for at */
+    int program = AT;       /* our default program */
+    char *options = "q:f:MmvldhVct:";   /* default options for at */
     int disp_version = 0;
-    time_t timer=0L;
+    time_t timer = 0L;
     struct passwd *pwe;
     struct group *ge;
 
     RELINQUISH_PRIVS
 
     if ((pwe = getpwnam(DAEMON_USERNAME)) == NULL)
-	perr("Cannot get uid for " DAEMON_USERNAME);
+        perr("Cannot get uid for " DAEMON_USERNAME);
 
     daemon_uid = pwe->pw_uid;
 
     if ((ge = getgrnam(DAEMON_GROUPNAME)) == NULL)
-	perr("Cannot get gid for " DAEMON_GROUPNAME);
+        perr("Cannot get gid for " DAEMON_GROUPNAME);
 
     daemon_gid = ge->gr_gid;
 
     /* Eat any leading paths
      */
     if ((pgm = strrchr(argv[0], '/')) == NULL)
-	pgm = argv[0];
+        pgm = argv[0];
     else
-	pgm++;
+        pgm++;
 
     namep = pgm;
 
     /* find out what this program is supposed to do
      */
     if (strcmp(pgm, "atq") == 0) {
-	program = ATQ;
-	options = "hq:V";
+        program = ATQ;
+        options = "hq:V";
     } else if (strcmp(pgm, "atrm") == 0) {
-	program = ATRM;
-	options = "hV";
+        program = ATRM;
+        options = "hV";
     }
     /* process whatever options we can process
      */
     opterr = 1;
     while ((c = getopt(argc, argv, options)) != EOF)
-	switch (c) {
-	case 'h':
-	    usage();
-	    exit (0);
+        switch (c) {
+        case 'h':
+            usage();
+            exit (0);
 
-	case 'v':		/* verify time settings */
-	    atverify = 1;
-	    break;
+        case 'v':       /* verify time settings */
+            atverify = 1;
+            break;
 
-	case 'm':		/* send mail when job is complete */
-	    send_mail = 1;
-	    break;
+        case 'm':       /* send mail when job is complete */
+            send_mail = 1;
+            break;
 
-	case 'M':		/* don't send mail, even when job failed */
-	    send_mail = -1;
-	    break;
+        case 'M':       /* don't send mail, even when job failed */
+            send_mail = -1;
+            break;
 
-	case 'f':
-	    atinput = optarg;
-	    break;
+        case 'f':
+            atinput = optarg;
+            break;
 
-	case 'q':		/* specify queue */
-	    if (strlen(optarg) > 1)
-		usage();
+        case 'q':       /* specify queue */
+            if (strlen(optarg) > 1)
+                usage();
 
-	    atqueue = queue = *optarg;
-	    if (!(islower(queue) || isupper(queue)) & (queue != '='))
-		usage();
+            atqueue = queue = *optarg;
+            if (!(islower(queue) || isupper(queue)) & (queue != '='))
+                usage();
 
-	    queue_set = 1;
-	    break;
+            queue_set = 1;
+            break;
 
-	case 'r':
-	case 'd':
-	    if (program != AT)
-		usage();
+        case 'r':
+        case 'd':
+            if (program != AT)
+                usage();
 
-	    program = ATRM;
-	    options = "V";
-	    break;
+            program = ATRM;
+            options = "V";
+            break;
 
-	case 'l':
-	    if (program != AT)
-		usage();
+        case 'l':
+            if (program != AT)
+                usage();
 
-	    program = ATQ;
-	    options = "q:V";
-	    break;
+            program = ATQ;
+            options = "q:V";
+            break;
 
-	case 'b':
-	    if (program != AT)
-		usage();
+        case 'b':
+            if (program != AT)
+                usage();
 
-	    program = BATCH;
-	    options = "";
-	    break;
+            program = BATCH;
+            options = "";
+            break;
 
-	case 'V':
-	    disp_version = 1;
-	    break;
+        case 'V':
+            disp_version = 1;
+            break;
 
-	case 'c':
-	    program = CAT;
-	    options = "";
-	    break;
-	case 't':
-	    timer = t_option(optarg);
-	    break;
-	default:
-	    usage();
-	    break;
-	}
+        case 'c':
+            program = CAT;
+            options = "";
+            break;
+        case 't':
+            timer = t_option(optarg);
+            break;
+        default:
+            usage();
+            break;
+        }
     /* end of options eating
      */
 
     if (disp_version) {
-		fprintf(stderr, "at version " VERSION "\n");
-		if (argc == 2)
-			exit(EXIT_SUCCESS);
-	}
+        fprintf(stderr, "at version " VERSION "\n");
+        if (argc == 2)
+            exit(EXIT_SUCCESS);
+    }
 
     /* select our program
      */
     if (!check_permission()) {
-	fprintf(stderr, "You do not have permission to use %.100s.\n", namep);
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "You do not have permission to use %.100s.\n", namep);
+        exit(EXIT_FAILURE);
     }
     switch (program) {
-	int i;
+        int i;
     case ATQ:
 
-	REDUCE_PRIV(daemon_uid, daemon_gid)
+        REDUCE_PRIV(daemon_uid, daemon_gid)
 
-	    list_jobs();
-	break;
+        list_jobs();
+        break;
 
     case ATRM:
 
-	REDUCE_PRIV(daemon_uid, daemon_gid)
-	if (argc > optind) {
-	    for (i = optind; i < argc ; i++ )
-		if (strspn(argv[i],"0123456789") != strlen(argv[i])) {
-		    fprintf(stderr,"at: unknown jobid: %s\n", argv[i]);
-		    exit(EXIT_FAILURE);
-		}
-	    return process_jobs(argc, argv, ATRM);
-	}
-	else
-	    usage();
-	break;
+        REDUCE_PRIV(daemon_uid, daemon_gid)
+        if (argc > optind) {
+            for (i = optind; i < argc ; i++ )
+                if (strspn(argv[i], "0123456789") != strlen(argv[i])) {
+                    fprintf(stderr, "at: unknown jobid: %s\n", argv[i]);
+                    exit(EXIT_FAILURE);
+                }
+            return process_jobs(argc, argv, ATRM);
+        }
+        else
+            usage();
+        break;
 
     case CAT:
 
-	if (argc > optind) {
-	    for (i = optind; i < argc ; i++ )
-		if (strspn(argv[i],"0123456789") != strlen(argv[i])) {
-		    fprintf(stderr,"at: unknown jobid: %s", argv[i]);
-		    exit(EXIT_FAILURE);
-		}
-	    return process_jobs(argc, argv, CAT);
-	}
-	else
-	    usage();
-	break;
+        if (argc > optind) {
+            for (i = optind; i < argc ; i++ )
+                if (strspn(argv[i], "0123456789") != strlen(argv[i])) {
+                    fprintf(stderr, "at: unknown jobid: %s", argv[i]);
+                    exit(EXIT_FAILURE);
+                }
+            return process_jobs(argc, argv, CAT);
+        }
+        else
+            usage();
+        break;
 
     case AT:
-	if (timer == 0) {
-	      if (argc > optind) {
-	          timer = parsetime(argc - optind, argv + optind);
-	       } else {
-	          timer = 0;
-               }
-	}
-
-	if (timer == 0) {
-	    fprintf(stderr, "Garbled time\n");
-	    exit(EXIT_FAILURE);
-	}
-	if (atverify) {
-	    struct tm *tm = localtime(&timer);
-	    fprintf(stderr, "%s\n", asctime(tm));
-	}
-
-	/* POSIX.2 allows the shell specified by the user's SHELL environment
-	   variable, the login shell from the user's password database entry,
-	   or /bin/sh to be the command interpreter that processes the at-job.
-	   It also alows a warning diagnostic to be printed.  Because of the
-	   possible variance, we always output the diagnostic. */
-
-//	fprintf(stderr, "warning: commands will be executed using /bin/sh\n");
-
-	writefile(timer, queue);
-	break;
-
-    case BATCH:
-	if (queue_set)
-	    queue = toupper(queue);
-	else
-	    queue = DEFAULT_BATCH_QUEUE;
-
-	if( timer == 0L )  {
-	  if (argc > optind)
-            timer = parsetime(argc, argv);
-            else
-          timer = time(NULL);
+        if (timer == 0) {
+            if (argc > optind) {
+                timer = parsetime(argc - optind, argv + optind);
+            } else {
+                timer = 0;
+            }
         }
 
-	if (atverify) {
-	    struct tm *tm = localtime(&timer);
-	    fprintf(stderr, "%s\n", asctime(tm));
-	}
-	writefile(timer, queue);
-	break;
+        if (timer == 0) {
+            fprintf(stderr, "Garbled time\n");
+            exit(EXIT_FAILURE);
+        }
+        if (atverify) {
+            struct tm *tm = localtime(&timer);
+            fprintf(stderr, "%s\n", asctime(tm));
+        }
+
+        /* POSIX.2 allows the shell specified by the user's SHELL environment
+           variable, the login shell from the user's password database entry,
+           or /bin/sh to be the command interpreter that processes the at-job.
+           It also alows a warning diagnostic to be printed.  Because of the
+           possible variance, we always output the diagnostic. */
+
+//  fprintf(stderr, "warning: commands will be executed using /bin/sh\n");
+
+        writefile(timer, queue);
+        break;
+
+    case BATCH:
+        if (queue_set)
+            queue = toupper(queue);
+        else
+            queue = DEFAULT_BATCH_QUEUE;
+
+        if ( timer == 0L )  {
+            if (argc > optind)
+                timer = parsetime(argc, argv);
+            else
+                timer = time(NULL);
+        }
+
+        if (atverify) {
+            struct tm *tm = localtime(&timer);
+            fprintf(stderr, "%s\n", asctime(tm));
+        }
+        writefile(timer, queue);
+        break;
 
     default:
-	panic("Internal error");
-	break;
+        panic("Internal error");
+        break;
     }
     exit(EXIT_SUCCESS);
 }

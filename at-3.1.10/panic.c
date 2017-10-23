@@ -1,4 +1,4 @@
-/* 
+/*
  *  panic.c - terminate fast in case of error
  *  Copyright (C) 1993  Thomas Koenig
  *
@@ -55,20 +55,20 @@ static const char *svnid = "$Id$";
 void
 panic(char *a)
 {
-/* Something fatal has happened, print error message and exit.
- */
+    /* Something fatal has happened, print error message and exit.
+     */
     fprintf(stderr, "%s: %s\n", namep, a);
     if (fcreated)
-	unlink(atfile);
+        unlink(atfile);
 
     exit(EXIT_FAILURE);
 }
 
 void
-perr(const char *fmt,...)
+perr(const char *fmt, ...)
 {
-/* Some operating system error; print error message and exit.
- */
+    /* Some operating system error; print error message and exit.
+     */
     char buf[1024];
     va_list args;
 
@@ -79,7 +79,7 @@ perr(const char *fmt,...)
     perror(buf);
     if (fcreated) {
         setregid(real_gid, effective_gid);
-	unlink(atfile);
+        unlink(atfile);
         setregid(effective_gid, real_gid);
     }
 
@@ -89,14 +89,14 @@ perr(const char *fmt,...)
 void
 usage(void)
 {
-/* Print usage and exit.
- */
+    /* Print usage and exit.
+     */
     fprintf(stderr, "Usage: at [-V] [-q x] [-f file] [-mMlbv] timespec ...\n"
             "       at [-V] [-q x] [-f file] [-mMlbv] -t time\n"
-    	    "       at -c job ...\n"
-	    "       atq [-V] [-q x]\n"
-	    "       at [ -rd ] job ...\n"
-	    "       atrm [-V] job ...\n"
-	    "       batch\n");
+            "       at -c job ...\n"
+            "       atq [-V] [-q x]\n"
+            "       at [ -rd ] job ...\n"
+            "       atrm [-V] job ...\n"
+            "       batch\n");
     exit(EXIT_FAILURE);
 }

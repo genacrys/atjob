@@ -1,1 +1,1 @@
-int getloadavg(double *result, int n);
+int getloadavg(double *result, int n);

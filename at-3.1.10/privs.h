@@ -1,5 +1,5 @@
-/* 
- *  privs.h - header for privileged operations 
+/*
+ *  privs.h - header for privileged operations
  *  Copyright (C) 1993  Thomas Koenig
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,49 +63,49 @@ extern gid_t real_gid, effective_gid, daemon_gid;
 
 #ifdef HAVE_SETREUID
 #define RELINQUISH_PRIVS { \
-			      real_uid = getuid(); \
-			      effective_uid = geteuid(); \
-			      real_gid = getgid(); \
-			      effective_gid = getegid(); \
-			      setreuid(effective_uid, real_uid); \
-			      setregid(effective_gid, real_gid); \
-		          }
+                  real_uid = getuid(); \
+                  effective_uid = geteuid(); \
+                  real_gid = getgid(); \
+                  effective_gid = getegid(); \
+                  setreuid(effective_uid, real_uid); \
+                  setregid(effective_gid, real_gid); \
+                  }
 
 #define RELINQUISH_PRIVS_ROOT(a,b) { \
-			      real_uid = (a); \
-			      effective_uid = geteuid(); \
-			      real_gid = (b); \
-			      effective_gid = getegid(); \
-			      setregid(effective_gid, real_gid); \
-			      setreuid(effective_uid, real_uid); \
-		          }
+                  real_uid = (a); \
+                  effective_uid = geteuid(); \
+                  real_gid = (b); \
+                  effective_gid = getegid(); \
+                  setregid(effective_gid, real_gid); \
+                  setreuid(effective_uid, real_uid); \
+                  }
 
 #define PRIV_START {\
-		    setreuid(real_uid, effective_uid); \
-		    setregid(real_gid, effective_gid);
+            setreuid(real_uid, effective_uid); \
+            setregid(real_gid, effective_gid);
 
 #define PRIV_END \
-		    setregid(effective_gid, real_gid); \
-		    setreuid(effective_uid, real_uid); \
-		    }
+            setregid(effective_gid, real_gid); \
+            setreuid(effective_uid, real_uid); \
+            }
 
 #define REDUCE_PRIV(a,b) {\
-			setreuid(real_uid, effective_uid); \
-			setregid(real_gid, effective_gid); \
-			effective_uid = (a); \
-			effective_gid = (b); \
-			setregid(effective_gid, real_gid); \
-			setreuid(effective_uid, real_uid); \
-		    }
+            setreuid(real_uid, effective_uid); \
+            setregid(real_gid, effective_gid); \
+            effective_uid = (a); \
+            effective_gid = (b); \
+            setregid(effective_gid, real_gid); \
+            setreuid(effective_uid, real_uid); \
+            }
 #elif HAVE_SETRESUID
 #define RELINQUISH_PRIVS { \
-			      real_uid = getuid(); \
-			      effective_uid = geteuid(); \
-			      real_gid = getgid(); \
-			      effective_gid = getegid(); \
-			      setresuid(effective_uid, real_uid, -1); \
-			      setresgid(effective_gid, real_gid, -1); \
-		          }
+                  real_uid = getuid(); \
+                  effective_uid = geteuid(); \
+                  real_gid = getgid(); \
+                  effective_gid = getegid(); \
+                  setresuid(effective_uid, real_uid, -1); \
+                  setresgid(effective_gid, real_gid, -1); \
+                  }
 
 /*
  * HP-UX kill(2) requires that the real or effective user ID of the
@@ -115,31 +115,31 @@ extern gid_t real_gid, effective_gid, daemon_gid;
  * "atd"'s saved ID "daemon".
  */
 #define RELINQUISH_PRIVS_ROOT(a,b) { \
-			      real_uid = (a); \
-			      effective_uid = geteuid(); \
-			      real_gid = (b); \
-			      effective_gid = getegid(); \
-			      setresgid(effective_gid, real_gid, real_gid); \
-			      setresuid(effective_uid, real_uid, real_uid); \
-		          }
+                  real_uid = (a); \
+                  effective_uid = geteuid(); \
+                  real_gid = (b); \
+                  effective_gid = getegid(); \
+                  setresgid(effective_gid, real_gid, real_gid); \
+                  setresuid(effective_uid, real_uid, real_uid); \
+                  }
 
 #define PRIV_START {\
-		    setresuid(real_uid, effective_uid, -1); \
-		    setresgid(real_gid, effective_gid, -1);
+            setresuid(real_uid, effective_uid, -1); \
+            setresgid(real_gid, effective_gid, -1);
 
 #define PRIV_END \
-		    setresgid(effective_gid, real_gid, -1); \
-		    setresuid(effective_uid, real_uid, -1); \
-		    }
+            setresgid(effective_gid, real_gid, -1); \
+            setresuid(effective_uid, real_uid, -1); \
+            }
 
 #define REDUCE_PRIV(a,b) {\
-			setresuid(real_uid, effective_uid, -1); \
-			setresgid(real_gid, effective_gid, -1); \
-			effective_uid = (a); \
-			effective_gid = (b); \
-			setresgid(effective_gid, real_gid, -1); \
-			setresuid(effective_uid, real_uid, -1); \
-		    }
+            setresuid(real_uid, effective_uid, -1); \
+            setresgid(real_gid, effective_gid, -1); \
+            effective_uid = (a); \
+            effective_gid = (b); \
+            setresgid(effective_gid, real_gid, -1); \
+            setresuid(effective_uid, real_uid, -1); \
+            }
 #else
 #error "Cannot implement user ID swapping without setreuid or setresuid"
 #endif
